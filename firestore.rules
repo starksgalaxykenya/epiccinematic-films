@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: is signed-in user an admin?
+    function isAdmin() {
+      return request.auth != null &&
+        request.auth.token.admin == true;
+    }
+
+    // Public read, admin write for content collections
+    match /films/{doc}       { allow read: if true; allow write: if isAdmin(); }
+    match /gallery/{doc}     { allow read: if true; allow write: if isAdmin(); }
+    match /events/{doc}      { allow read: if true; allow write: if isAdmin(); }
+    match /artists/{doc}     { allow read: if true; allow write: if isAdmin(); }
+    match /pages/{doc}       { allow read: if true; allow write: if isAdmin(); }
+    match /sounds/{doc}      { allow read: if true; allow write: if isAdmin(); }
+
+    // Quotes: anyone can create, only admin can read/update/delete
+    match /quotes/{doc} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Users collection (admin flag stored here)
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false; // managed via Firebase Console / Admin SDK
+    }
+  }
+}
